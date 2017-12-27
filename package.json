@@ -1,0 +1,20 @@
+{
+  "name": "notificationsapi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node index -w"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^8.5.2",
+    "glob": "^7.1.2",
+    "lite-server": "^2.3.0",
+    "node-sass": "^4.7.2",
+    "ts-node": "^4.1.0",
+    "typescript": "^2.6.2"
+  }
+}

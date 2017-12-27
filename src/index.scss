@@ -1,0 +1,15 @@
+.notifications-supported {
+    display: none;
+
+    body.notifications & {
+        display: block;
+    }
+}
+
+.notifications-notSupported {
+    display: none;
+
+    body:not(.notifications) & {
+        display: block;
+    }
+}
