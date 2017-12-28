@@ -3,9 +3,10 @@ class MwFormEngine {
         document.addEventListener("submit", function (e: Event) {
             var element = e.target as Node;
 
-            var mwSubmit = element.attributes.getNamedItem('mw-submit');
-            if (mwSubmit) {
-                eval(mwSubmit.value);
+            var mwSubmitAttr = element.attributes.getNamedItem('mw-submit');
+            if (mwSubmitAttr) {
+                var mwSubmit = new Function(mwSubmitAttr.value);
+                mwSubmit();
             }
 
             e.stopPropagation();

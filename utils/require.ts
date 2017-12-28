@@ -44,14 +44,10 @@ interface Window {
     }
 
     function parseModule(text: string): any {
-        window.exports = {};
-
-        eval(text);
-
-        const moduleExports = window.exports;
-        window.exports = {};
-
-        return moduleExports
+        let exports = {};
+        const module = new Function("exports", text);
+        module(exports);
+        return exports
     }
 
     function getFromServer(path: string): any {
