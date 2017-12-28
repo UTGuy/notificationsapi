@@ -29,6 +29,15 @@ export class Observable<T> implements ISubject<T> {
         this.events = [];
     }
 
+    static fromPromise<T>(promise: PromiseLike<T>): Observable<T> {
+        const obs = new Observable<T>();
+        promise.then(
+            value => obs.next(value),
+            error => obs.error(error)
+        ).then(() => obs.complete());
+        return obs;
+    }
+
     static create(): Observable<void> {
         return new Observable<void>();
     }

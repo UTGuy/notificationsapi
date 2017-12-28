@@ -2,6 +2,7 @@ import * as sass from './sass';
 import * as html from './html';
 import * as typescript from './typescript';
 import * as watch from './watch';
+import { existsSync, mkdirSync } from 'fs';
 import { EOL } from 'os';
 import { Observable, ISubject, ISubscribable } from './observable';
 import { relative } from 'path';
@@ -17,11 +18,11 @@ export class Compiler {
         return this;
     }
 
-    private copyHtml(): ISubject<void> {
+    private copyHtml(): ISubject<string> {
         return html.copy(this.config.sourceDir, this.config.destDir);
     }
 
-    private compileSass(): ISubject<void> {
+    private compileSass(): ISubject<string> {
         return sass.compile(this.config.sourceDir, 'index.scss', this.config.destDir);
     }
 
@@ -54,13 +55,21 @@ export class Compiler {
     compile(): ISubject<any> {
         const obs = new Observable<{ count: number, name: string }>();
 
+        if (!existsSync(this.config.destDir)) {
+            try {
+                mkdirSync(this.config.destDir);
+            } catch (ex) {
+                obs.error(ex);
+                return obs;
+            }
+        }
+
         let count = 0;
         const onNext = (subject: () => ISubject<any>, name: string) => {
             console.log(`compiling ${name}`);
             subject().subscribe({
                 next: (value) => {
-                    if (value != null)
-                        console.log(value)
+                    console.log(value)
                 },
                 complete: () => obs.next({ count: ++count, name: name })
             });
