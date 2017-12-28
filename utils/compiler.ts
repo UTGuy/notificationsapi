@@ -2,7 +2,9 @@ import * as sass from './sass';
 import * as html from './html';
 import * as typescript from './typescript';
 import * as watch from './watch';
-import {Observable, ISubject} from './observable';
+import { EOL } from 'os';
+import { Observable, ISubject, ISubscribable } from './observable';
+import { relative } from 'path';
 
 export interface ICompilerConfig {
     sourceDir: string;
@@ -10,37 +12,38 @@ export interface ICompilerConfig {
 }
 
 export class Compiler {
-    configure(config: ICompilerConfig) {
+    configure(config: ICompilerConfig): Compiler {
         this.config = config;
+        return this;
     }
 
-    private copyHtml() {
-        console.log('copy Html');
-        html.copy(this.config.sourceDir, this.config.destDir);
+    private copyHtml(): ISubject<void> {
+        return html.copy(this.config.sourceDir, this.config.destDir);
     }
 
-    private compileSass() {
-        console.log('compile Sass');
-        sass.compile(this.config.sourceDir, 'index.scss', this.config.destDir);
+    private compileSass(): ISubject<void> {
+        return sass.compile(this.config.sourceDir, 'index.scss', this.config.destDir);
     }
 
-    private compileTs() {
-        console.log('compile Ts');
-        typescript.compile();
+    private compileTs(): ISubject<string> {
+        return typescript.compile(this.config.sourceDir, this.config.destDir);
     }
 
     watch() {
         watch.directory(this.config.sourceDir).subscribe({
             next: data => {
                 console.log(data);
-                switch (data.extension) {
+                switch (data!.extension) {
                     case ".html":
+                        console.log('updating html');
                         this.copyHtml();
                         break;
                     case ".scss":
+                        console.log('updating sass');
                         this.compileSass();
                         break;
                     case ".ts":
+                        console.log('updating typescript');
                         this.compileTs();
                         break;
                 }
@@ -48,12 +51,34 @@ export class Compiler {
         });
     }
 
-    compile(): ISubject<void> {
-        const obs = new Observable<void>();
+    compile(): ISubject<any> {
+        const obs = new Observable<{ count: number, name: string }>();
 
-        this.copyHtml();
-        this.compileSass();
-        this.compileTs();
+        let count = 0;
+        const onNext = (subject: () => ISubject<any>, name: string) => {
+            console.log(`compiling ${name}`);
+            subject().subscribe({
+                next: (value) => {
+                    if (value != null)
+                        console.log(value)
+                },
+                complete: () => obs.next({ count: ++count, name: name })
+            });
+        };
+
+        const total = 3;
+        onNext(() => this.copyHtml(), 'html');
+        onNext(() => this.compileSass(), 'sass');
+        onNext(() => this.compileTs(), 'typescript');
+
+        obs.subscribe({
+            next: data => {
+                console.log(`completed(${data!.count}/${total}) ${data!.name}`);
+                if (data!.count < total)
+                    return;
+                obs.complete();
+            }
+        });
 
         return obs;
     }

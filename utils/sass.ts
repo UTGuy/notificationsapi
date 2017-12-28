@@ -1,10 +1,22 @@
 import { render as renderSass } from "node-sass";
-import { writeFileSync } from 'fs';
+import { writeFile } from 'fs';
+import { Observable, ISubject } from './observable';
 
-export function compile(sourceDir: string, entryFile: string, destDir: string) {
+export function compile(sourceDir: string, entryFile: string, destDir: string): ISubject<void> {
+    var obs = Observable.create();
+
     renderSass({
         file: `${sourceDir}/${entryFile}`
     }, (err, result) => {
-        writeFileSync(`${destDir}/stylesheet.css`, result.css);
+        writeFile(`${destDir}/stylesheet.css`, result.css, error => {
+            if (error != null) {
+                obs.error(error);
+            } else {
+                obs.next();
+                obs.complete();
+            }
+        });
     });
+
+    return obs;
 }
